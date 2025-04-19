@@ -34,9 +34,14 @@ function updateScore() {
 }
 
 function updateStatus() {
-  if (game.getStatus() === Game.statuses.WIN) {
+  messageWin.classList.add('hidden');
+  messageLose.classList.add('hidden');
+
+  const currentStatus = game.getStatus();
+
+  if (currentStatus === Game.statuses.WIN) {
     messageWin.classList.remove('hidden');
-  } else if (game.getStatus() === Game.statuses.LOSE) {
+  } else if (currentStatus === Game.statuses.LOSE) {
     messageLose.classList.remove('hidden');
   }
 }
@@ -63,6 +68,7 @@ button.addEventListener('click', () => {
     button.classList.add('start');
     button.textContent = 'Start';
     messageLose.classList.add('hidden');
+    messageWin.classList.add('hidden');
     game.restart();
     updateBoard();
     updateScore();

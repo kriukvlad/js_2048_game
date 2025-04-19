@@ -1,6 +1,15 @@
 'use strict';
 
 class Game {
+  static get statuses() {
+    return {
+      IDLE: 'idle',
+      PLAYING: 'playing',
+      WIN: 'win',
+      LOSE: 'lose',
+    };
+  }
+
   /* static statuses = {
     IDLE: 'idle',
     PLAYING: 'playing',
@@ -16,18 +25,24 @@ class Game {
       [0, 0, 0, 0],
     ],
   ) {
-    if (!Game.statuses) {
-      Game.statuses = {
-        IDLE: 'idle',
-        PLAYING: 'playing',
-        WIN: 'win',
-      };
+    this.size = 4;
+    this.score = 0;
+    this.status = Game.statuses.IDLE;
+    this.initialState = initialState.map((row) => [...row]);
+    this.state = initialState.map((row) => [...row]);
+  }
 
-      this.size = 4;
-      this.score = 0;
-      this.status = Game.statuses.IDLE;
-      this.state = initialState.map((row) => [...row]);
-    }
+  start() {
+    this.addRandomTile();
+    this.addRandomTile();
+    this.status = Game.statuses.PLAYING;
+  }
+
+  restart() {
+    this.state = this.initialState.map((row) => [...row]);
+    this.score = 0;
+    this.status = Game.statuses.IDLE;
+    this.start();
   }
 
   addRandomTile() {
@@ -42,97 +57,94 @@ class Game {
     });
 
     if (emptyCells.length === 0) {
+      return;
     }
 
-    const radomIndex = Math.floor(Math.random() * emptyCells.length);
-    const { row, col } = emptyCells[radomIndex];
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    const { row, col } = emptyCells[randomIndex];
     const tileNewValue = Math.random() < 0.9 ? 2 : 4;
 
     this.state[row][col] = tileNewValue;
   }
 
   moveLeft() {
-    if (this.status === Game.statuses.PLAYING) {
-      const previousState = this.state.map((row) => [...row]);
-      const movedBoard = [];
-      const mergedBoard = [];
+    if (this.status !== Game.statuses.PLAYING) {
+      return;
+    }
 
-      for (let row = 0; row < this.size; row++) {
-        const movedRow = this.state[row].filter((cell) => cell !== 0);
+    const previousState = this.state.map((row) => [...row]);
+    const newState = [];
+    let moveScore = 0;
 
-        while (movedRow.length < this.size) {
-          movedRow.push(0);
+    for (let r = 0; r < this.size; r++) {
+      const row = this.state[r].filter((cell) => cell !== 0);
+      const mergedRow = [];
+
+      for (let c = 0; c < row.length; c++) {
+        if (c + 1 < row.length && row[c] === row[c + 1]) {
+          const mergedValue = row[c] * 2;
+
+          mergedRow.push(mergedValue);
+          moveScore += mergedValue;
+          c++;
+        } else {
+          mergedRow.push(row[c]);
         }
-
-        movedBoard.push(movedRow);
       }
 
-      for (let row = 0; row < this.size; row++) {
-        const notZeroRow = movedBoard[row].filter((cell) => cell !== 0);
-
-        for (let i = 0; i < notZeroRow.length; i++) {
-          if (notZeroRow[i] === notZeroRow[i + 1]) {
-            notZeroRow[i] = notZeroRow[i] * 2;
-            notZeroRow[i + 1] = 0;
-            this.updateScore(notZeroRow[i]);
-          }
-        }
-
-        while (notZeroRow.length < this.size) {
-          notZeroRow.push(0);
-        }
-
-        mergedBoard.push(notZeroRow);
+      while (mergedRow.length < this.size) {
+        mergedRow.push(0);
       }
 
-      if (!this.boardsAreEqual(previousState, mergedBoard)) {
-        this.state = mergedBoard;
-        this.addRandomTile();
-        this.checkStatus();
-      }
+      newState.push(mergedRow);
+    }
+
+    if (!this.boardsAreEqual(previousState, newState)) {
+      this.state = newState;
+      this.updateScore(moveScore);
+      this.addRandomTile();
+      this.checkStatus();
     }
   }
 
   moveRight() {
-    if (this.status === Game.statuses.PLAYING) {
-      const previousState = this.state.map((row) => [...row]);
-      const movedBoard = [];
-      const mergedBoard = [];
+    if (this.status !== Game.statuses.PLAYING) {
+      return;
+    }
 
-      for (let row = 0; row < this.size; row++) {
-        const movedRow = this.state[row].filter((cell) => cell !== 0);
+    const previousState = this.state.map((row) => [...row]);
+    const newState = [];
+    let moveScore = 0;
 
-        while (movedRow.length < this.size) {
-          movedRow.unshift(0);
+    for (let r = 0; r < this.size; r++) {
+      const row = this.state[r].filter((cell) => cell !== 0);
+
+      const mergedRow = [];
+
+      for (let c = row.length - 1; c >= 0; c--) {
+        if (c - 1 >= 0 && row[c] === row[c - 1]) {
+          const mergedValue = row[c] * 2;
+
+          mergedRow.unshift(mergedValue);
+          moveScore += mergedValue;
+          c--;
+        } else {
+          mergedRow.unshift(row[c]);
         }
-
-        movedBoard.push(movedRow);
       }
 
-      for (let row = 0; row < this.size; row++) {
-        const notZeroRow = movedBoard[row].filter((cell) => cell !== 0);
-
-        for (let i = notZeroRow.length - 1; i > 0; i--) {
-          if (notZeroRow[i] === notZeroRow[i - 1]) {
-            notZeroRow[i] *= 2;
-            notZeroRow.splice(i - 1, 1);
-            notZeroRow.unshift(0);
-            this.updateScore(notZeroRow[i]);
-          }
-        }
-
-        while (notZeroRow.length < this.size) {
-          notZeroRow.unshift(0);
-        }
-
-        mergedBoard.push(notZeroRow);
+      while (mergedRow.length < this.size) {
+        mergedRow.unshift(0);
       }
 
-      if (!this.boardsAreEqual(previousState, mergedBoard)) {
-        this.state = mergedBoard;
-        this.addRandomTile();
-        this.checkStatus();
-      }
+      newState.push(mergedRow);
+    }
+
+    if (!this.boardsAreEqual(previousState, newState)) {
+      this.state = newState;
+      this.updateScore(moveScore);
+      this.addRandomTile();
+      this.checkStatus();
     }
   }
 
@@ -250,7 +262,7 @@ class Game {
   }
 
   updateScore(newScore) {
-    this.score = this.score + newScore;
+    this.score += newScore;
   }
 
   getState() {
@@ -259,18 +271,6 @@ class Game {
 
   getStatus() {
     return this.status;
-  }
-
-  start() {
-    this.addRandomTile();
-    this.addRandomTile();
-    this.status = Game.statuses.PLAYING;
-  }
-
-  restart() {
-    this.score = 0;
-    this.state = this.initialState.map((row) => [...row]);
-    this.status = Game.statuses.IDLE;
   }
 
   boardsAreEqual(previousBoard, newBoard) {
