@@ -10,13 +10,6 @@ class Game {
     };
   }
 
-  /* static statuses = {
-    IDLE: 'idle',
-    PLAYING: 'playing',
-    WIN: 'win',
-    LOSE: 'lose',
-  }; */
-
   constructor(
     initialState = [
       [0, 0, 0, 0],
@@ -42,7 +35,6 @@ class Game {
     this.state = this.initialState.map((row) => [...row]);
     this.score = 0;
     this.status = Game.statuses.IDLE;
-    this.start();
   }
 
   addRandomTile() {

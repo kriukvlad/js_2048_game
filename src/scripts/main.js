@@ -3,9 +3,14 @@
 const Game = require('../modules/Game.class');
 const game = new Game();
 
-function updateBoard() {
-  const gameField = document.querySelector('.game-field');
+const button = document.querySelector('.button');
+const messageStart = document.querySelector('.message-start');
+const messageLose = document.querySelector('.message-lose');
+const messageWin = document.querySelector('.message-win');
+const gameScore = document.querySelector('.game-score');
+const gameField = document.querySelector('.game-field');
 
+function updateBoard() {
   gameField.innerHTML = '';
 
   game.getState().forEach((row) => {
@@ -46,11 +51,7 @@ function updateStatus() {
   }
 }
 
-const button = document.querySelector('.button');
-const messageStart = document.querySelector('.message-start');
-const messageLose = document.querySelector('.message-lose');
-const messageWin = document.querySelector('.message-win');
-const gameScore = document.querySelector('.game-score');
+updateScore();
 
 button.addEventListener('click', () => {
   if (button.classList.contains('start')) {
@@ -76,6 +77,12 @@ button.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (game.getStatus() !== Game.statuses.PLAYING) {
+    return;
+  }
+
+  let keyProcessed = true;
+
   e.preventDefault();
 
   switch (e.key) {
@@ -91,9 +98,14 @@ document.addEventListener('keydown', (e) => {
     case 'ArrowLeft':
       game.moveLeft();
       break;
+    default:
+      keyProcessed = false;
+      break;
   }
 
-  updateScore();
-  updateBoard();
-  updateStatus();
+  if (keyProcessed) {
+    updateScore();
+    updateBoard();
+    updateStatus();
+  }
 });
